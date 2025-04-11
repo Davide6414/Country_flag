@@ -176,7 +176,7 @@
       <div id="error-log"></div>
     </details>
     
-    <!-- Sezione classifica degli stati indovinati con streak (tutte le risposte > 0 vengono mostrate, ma se ≥ 10 si colora in verde) -->
+    <!-- Sezione classifica degli stati indovinati con streak (mostra tutti gli stati con streak > 0; se ≥ 10 appare in verde) -->
     <details id="streak-ranking">
       <summary>Classifica Streak Indovinati</summary>
       <div id="streak-log"></div>
@@ -184,7 +184,7 @@
   </div>
   
   <script>
-    // Array dei paesi: nome e codice (Flag Icons usa codici in minuscolo)
+    // Array dei paesi: nome e codice (per Flag Icons)
     const countries = [
       {name: "Andorra", code: "ad"},
       {name: "Albania", code: "al"},
@@ -233,7 +233,7 @@
       {name: "Città del Vaticano", code: "va"}
     ];
     
-    // Oggetto per tracciare quante volte ciascun paese è stato indovinato consecutivamente
+    // Oggetto per tracciare lo streak per ogni stato
     let countryStreaks = {};
     
     // Variabili per il gioco
@@ -242,7 +242,32 @@
     let streak = 0;          // Streak globale (risposte corrette consecutive)
     let errorHistory = [];   // Cronologia errori (massimo 5)
     
-    // Funzione per mescolare un array (Fisher–Yates)
+    // Funzioni per salvare/caricare i dati nel localStorage
+    function saveData() {
+      localStorage.setItem("globalStreak", streak);
+      localStorage.setItem("countryStreaks", JSON.stringify(countryStreaks));
+      localStorage.setItem("errorHistory", JSON.stringify(errorHistory));
+    }
+    
+    function loadData() {
+      const storedGlobalStreak = localStorage.getItem("globalStreak");
+      const storedCountryStreaks = localStorage.getItem("countryStreaks");
+      const storedErrorHistory = localStorage.getItem("errorHistory");
+      if (storedGlobalStreak !== null) {
+        streak = parseInt(storedGlobalStreak, 10);
+      }
+      if (storedCountryStreaks !== null) {
+        countryStreaks = JSON.parse(storedCountryStreaks);
+      }
+      if (storedErrorHistory !== null) {
+        errorHistory = JSON.parse(storedErrorHistory);
+      }
+      updateStreak();
+      updateStreakRanking();
+      updateErrorLog();
+    }
+    
+    // Funzione per mescolare un array (algoritmo Fisher–Yates)
     function shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -289,7 +314,7 @@
       document.getElementById("streak-value").textContent = streak;
     }
     
-    // Aggiorna la sezione della cronologia errori (ultimi 5 errori)
+    // Aggiorna la cronologia errori (ultimi 5 errori)
     function updateErrorLog() {
       const errorLogDiv = document.getElementById("error-log");
       errorLogDiv.innerHTML = "";
@@ -302,14 +327,13 @@
       });
     }
     
-    // Aggiorna la classifica delle streak: mostra tutti i paesi con streak > 0;
-    // se lo streak è ≥ 10 l'elemento verrà evidenziato in verde (classe "correct")
+    // Aggiorna la classifica delle streak: mostra tutti gli stati con streak > 0; se ≥ 10 evidenzia in verde
     function updateStreakRanking() {
       const streakLogDiv = document.getElementById("streak-log");
       streakLogDiv.innerHTML = "";
       Object.keys(countryStreaks).forEach(countryName => {
         const currentStreak = countryStreaks[countryName];
-        if (currentStreak > 0) {  // Mostriamo tutte le voci con almeno 1 risposta corretta
+        if (currentStreak > 0) {
           const countryObj = countries.find(c => c.name === countryName);
           if (countryObj) {
             const div = document.createElement("div");
@@ -326,7 +350,7 @@
       });
     }
     
-    // Mostra un feedback (1.5 sec) e poi genera una nuova domanda
+    // Mostra il feedback per 1.5 sec e poi genera una nuova domanda
     function showFeedback(message, isCorrect) {
       const feedbackDiv = document.getElementById("feedback");
       feedbackDiv.textContent = message;
@@ -335,16 +359,17 @@
         feedbackDiv.textContent = "";
         generateQuestion();
       }, 1500);
+      saveData();
     }
     
-    // Disabilita interazioni sulle opzioni (modalità a scelta multipla)
+    // Disabilita le opzioni (modalità a scelta multipla)
     function disableOptions() {
       document.querySelectorAll(".option").forEach(option => {
         option.classList.add("disabled");
       });
     }
     
-    // Evidenzia, nelle modalità a scelta multipla, l'opzione corretta
+    // Evidenzia (nelle modalità a scelta multipla) l'opzione corretta
     function highlightCorrectOption() {
       document.querySelectorAll(".option").forEach(option => {
         if (option.dataset.country === currentCorrect.name) {
@@ -353,14 +378,14 @@
       });
     }
     
-    // Genera una nuova domanda, scegliendo casualmente una delle tre modalità
+    // Genera una nuova domanda in una delle tre modalità
     function generateQuestion() {
       // Pulizia delle sezioni
       document.getElementById("options-container").innerHTML = "";
       document.getElementById("flag-display").innerHTML = "";
       document.getElementById("input-container").innerHTML = "";
       
-      // Seleziona la modalità: circa 33% per ciascuna
+      // Selezione casuale della modalità: circa 33% per ciascuna
       const modeRandom = Math.random();
       if (modeRandom < 1/3) {
         currentMode = "name-to-flag";
@@ -370,7 +395,7 @@
         currentMode = "flag-to-input";
       }
       
-      // Selezione del paese dal pool (eventualmente filtrato)
+      // Selezione dal pool (eventualmente filtrato)
       const pool = getCountryPool();
       currentCorrect = pool[Math.floor(Math.random() * pool.length)];
       const options = generateOptions(currentCorrect);
@@ -483,6 +508,7 @@
         inputContainer.appendChild(submitBtn);
         input.focus();
       }
+      saveData();
     }
     
     // Genera il <datalist> per il campo di testo nella modalità "flag-to-input"
@@ -498,6 +524,7 @@
     }
     
     generateDatalist();
+    loadData();
     window.onload = generateQuestion;
   </script>
 </body>
