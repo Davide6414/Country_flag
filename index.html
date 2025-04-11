@@ -1,80 +1,222 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Bandiere dei Paesi Europei</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Indovina la Bandiera</title>
+  <!-- Includiamo la libreria Flag Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons/css/flag-icons.min.css">
   <style>
+    /* Stile base per il mobile e l’interfaccia */
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
+      margin: 0;
+      padding: 10px;
+      background: #f9f9f9;
     }
-    .flag-container {
+    #game {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+    }
+    #question {
+      font-size: 1.2em;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    #flag-display {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .options {
       display: flex;
       flex-wrap: wrap;
-      gap: 15px;
+      justify-content: center;
+      gap: 10px;
     }
-    .flag-item {
-      display: flex;
-      align-items: center;
-      width: 200px;
+    .option {
+      flex: 1 1 calc(50% - 20px);
+      padding: 10px;
+      margin: 5px;
+      text-align: center;
+      border: 2px solid #007BFF;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s;
+      user-select: none;
+    }
+    .option:hover {
+      background: #007BFF;
+      color: white;
     }
     .flag-icon {
-      width: 32px;
-      height: 24px;
-      margin-right: 10px;
+      font-size: 3em;
+    }
+    #feedback {
+      text-align: center;
+      font-size: 1.1em;
+      margin-top: 10px;
+      height: 1.5em;
     }
   </style>
 </head>
 <body>
-  <h1>Bandiere dei Paesi Europei</h1>
-  <div class="flag-container">
-    <div class="flag-item"><span class="fi fi-ad flag-icon"></span>Andorra</div>
-    <div class="flag-item"><span class="fi fi-al flag-icon"></span>Albania</div>
-    <div class="flag-item"><span class="fi fi-at flag-icon"></span>Austria</div>
-    <div class="flag-item"><span class="fi fi-by flag-icon"></span>Bielorussia</div>
-    <div class="flag-item"><span class="fi fi-be flag-icon"></span>Belgio</div>
-    <div class="flag-item"><span class="fi fi-ba flag-icon"></span>Bosnia ed Erzegovina</div>
-    <div class="flag-item"><span class="fi fi-bg flag-icon"></span>Bulgaria</div>
-    <div class="flag-item"><span class="fi fi-hr flag-icon"></span>Croazia</div>
-    <div class="flag-item"><span class="fi fi-cy flag-icon"></span>Cipro</div>
-    <div class="flag-item"><span class="fi fi-cz flag-icon"></span>Repubblica Ceca</div>
-    <div class="flag-item"><span class="fi fi-dk flag-icon"></span>Danimarca</div>
-    <div class="flag-item"><span class="fi fi-ee flag-icon"></span>Estonia</div>
-    <div class="flag-item"><span class="fi fi-fi flag-icon"></span>Finlandia</div>
-    <div class="flag-item"><span class="fi fi-fr flag-icon"></span>Francia</div>
-    <div class="flag-item"><span class="fi fi-de flag-icon"></span>Germania</div>
-    <div class="flag-item"><span class="fi fi-gr flag-icon"></span>Grecia</div>
-    <div class="flag-item"><span class="fi fi-hu flag-icon"></span>Ungheria</div>
-    <div class="flag-item"><span class="fi fi-is flag-icon"></span>Islanda</div>
-    <div class="flag-item"><span class="fi fi-ie flag-icon"></span>Irlanda</div>
-    <div class="flag-item"><span class="fi fi-it flag-icon"></span>Italia</div>
-    <div class="flag-item"><span class="fi fi-lv flag-icon"></span>Lettonia</div>
-    <div class="flag-item"><span class="fi fi-lt flag-icon"></span>Lituania</div>
-    <div class="flag-item"><span class="fi fi-lu flag-icon"></span>Lussemburgo</div>
-    <div class="flag-item"><span class="fi fi-mt flag-icon"></span>Malta</div>
-    <div class="flag-item"><span class="fi fi-md flag-icon"></span>Moldavia</div>
-    <div class="flag-item"><span class="fi fi-mc flag-icon"></span>Monaco</div>
-    <div class="flag-item"><span class="fi fi-me flag-icon"></span>Montenegro</div>
-    <div class="flag-item"><span class="fi fi-nl flag-icon"></span>Paesi Bassi</div>
-    <div class="flag-item"><span class="fi fi-mk flag-icon"></span>Macedonia del Nord</div>
-    <div class="flag-item"><span class="fi fi-no flag-icon"></span>Norvegia</div>
-    <div class="flag-item"><span class="fi fi-pl flag-icon"></span>Polonia</div>
-    <div class="flag-item"><span class="fi fi-pt flag-icon"></span>Portogallo</div>
-    <div class="flag-item"><span class="fi fi-ro flag-icon"></span>Romania</div>
-    <div class="flag-item"><span class="fi fi-ru flag-icon"></span>Russia</div>
-    <div class="flag-item"><span class="fi fi-sm flag-icon"></span>San Marino</div>
-    <div class="flag-item"><span class="fi fi-rs flag-icon"></span>Serbia</div>
-    <div class="flag-item"><span class="fi fi-sk flag-icon"></span>Slovacchia</div>
-    <div class="flag-item"><span class="fi fi-si flag-icon"></span>Slovenia</div>
-    <div class="flag-item"><span class="fi fi-es flag-icon"></span>Spagna</div>
-    <div class="flag-item"><span class="fi fi-se flag-icon"></span>Svezia</div>
-    <div class="flag-item"><span class="fi fi-ch flag-icon"></span>Svizzera</div>
-    <div class="flag-item"><span class="fi fi-tr flag-icon"></span>Turchia</div>
-    <div class="flag-item"><span class="fi fi-ua flag-icon"></span>Ucraina</div>
-    <div class="flag-item"><span class="fi fi-gb flag-icon"></span>Regno Unito</div>
-    <div class="flag-item"><span class="fi fi-va flag-icon"></span>Città del Vaticano</div>
+  <div id="game">
+    <h1>Indovina la Bandiera</h1>
+    <div id="question"></div>
+    <div id="flag-display"></div>
+    <div class="options" id="options-container"></div>
+    <div id="feedback"></div>
   </div>
+  
+  <script>
+    // Array dei paesi con nome e codice (per Flag Icons, usa codici ISO in minuscolo)
+    const countries = [
+      {name: "Andorra", code: "ad"},
+      {name: "Albania", code: "al"},
+      {name: "Austria", code: "at"},
+      {name: "Bielorussia", code: "by"},
+      {name: "Belgio", code: "be"},
+      {name: "Bosnia ed Erzegovina", code: "ba"},
+      {name: "Bulgaria", code: "bg"},
+      {name: "Croazia", code: "hr"},
+      {name: "Cipro", code: "cy"},
+      {name: "Repubblica Ceca", code: "cz"},
+      {name: "Danimarca", code: "dk"},
+      {name: "Estonia", code: "ee"},
+      {name: "Finlandia", code: "fi"},
+      {name: "Francia", code: "fr"},
+      {name: "Germania", code: "de"},
+      {name: "Grecia", code: "gr"},
+      {name: "Ungheria", code: "hu"},
+      {name: "Islanda", code: "is"},
+      {name: "Irlanda", code: "ie"},
+      {name: "Italia", code: "it"},
+      {name: "Lettonia", code: "lv"},
+      {name: "Lituania", code: "lt"},
+      {name: "Lussemburgo", code: "lu"},
+      {name: "Malta", code: "mt"},
+      {name: "Moldavia", code: "md"},
+      {name: "Monaco", code: "mc"},
+      {name: "Montenegro", code: "me"},
+      {name: "Paesi Bassi", code: "nl"},
+      {name: "Macedonia del Nord", code: "mk"},
+      {name: "Norvegia", code: "no"},
+      {name: "Polonia", code: "pl"},
+      {name: "Portogallo", code: "pt"},
+      {name: "Romania", code: "ro"},
+      {name: "Russia", code: "ru"},
+      {name: "San Marino", code: "sm"},
+      {name: "Serbia", code: "rs"},
+      {name: "Slovacchia", code: "sk"},
+      {name: "Slovenia", code: "si"},
+      {name: "Spagna", code: "es"},
+      {name: "Svezia", code: "se"},
+      {name: "Svizzera", code: "ch"},
+      {name: "Turchia", code: "tr"},
+      {name: "Ucraina", code: "ua"},
+      {name: "Regno Unito", code: "gb"},
+      {name: "Città del Vaticano", code: "va"}
+    ];
+    
+    let currentCorrect = null;
+    let currentMode = null; // modalità: "name-to-flag" oppure "flag-to-name"
+
+    // Funzione per mescolare gli elementi di un array (algoritmo di Fisher-Yates)
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    // Genera un set di 4 opzioni (incluso il paese corretto)
+    function generateOptions(correctCountry) {
+      const options = [correctCountry];
+      while (options.length < 4) {
+        const randomCountry = countries[Math.floor(Math.random() * countries.length)];
+        if (!options.some(opt => opt.name === randomCountry.name)) {
+          options.push(randomCountry);
+        }
+      }
+      return shuffleArray(options);
+    }
+
+    // Mostra un messaggio di feedback e dopo breve intervallo genera una nuova domanda
+    function showFeedback(message, isCorrect) {
+      const feedbackDiv = document.getElementById("feedback");
+      feedbackDiv.textContent = message;
+      feedbackDiv.style.color = isCorrect ? "green" : "red";
+      setTimeout(() => {
+        feedbackDiv.textContent = "";
+        generateQuestion();
+      }, 1500);
+    }
+
+    // Funzione che genera una nuova domanda, scegliendo casualmente una modalità e i relativi dati
+    function generateQuestion() {
+      // Reset degli elementi per una nuova domanda
+      document.getElementById("options-container").innerHTML = "";
+      document.getElementById("flag-display").innerHTML = "";
+
+      // Scegliamo la modalità casualmente
+      currentMode = Math.random() < 0.5 ? "name-to-flag" : "flag-to-name";
+
+      // Selezioniamo il paese corretto
+      currentCorrect = countries[Math.floor(Math.random() * countries.length)];
+      const options = generateOptions(currentCorrect);
+
+      const questionDiv = document.getElementById("question");
+      
+      if (currentMode === "name-to-flag") {
+        // Modalità: dato il nome, seleziona la bandiera corretta
+        questionDiv.textContent = "Seleziona la bandiera di: " + currentCorrect.name;
+        // Creiamo le opzioni come icone di bandiera
+        options.forEach(option => {
+          const btn = document.createElement("div");
+          btn.className = "option";
+          btn.innerHTML = '<span class="fi fi-' + option.code + ' flag-icon"></span>';
+          btn.addEventListener("click", () => {
+            if(option.name === currentCorrect.name) {
+              showFeedback("Giusto!", true);
+            } else {
+              showFeedback("Sbagliato!", false);
+            }
+          });
+          document.getElementById("options-container").appendChild(btn);
+        });
+      } else {
+        // Modalità: data la bandiera, seleziona il nome corretto
+        questionDiv.textContent = "Seleziona il nome corrispondente a questa bandiera:";
+        // Visualizziamo la bandiera (corretta) in alto
+        document.getElementById("flag-display").innerHTML = 
+          '<span class="fi fi-' + currentCorrect.code + ' flag-icon"></span>';
+        // Creiamo le opzioni come testi con i nomi dei paesi
+        options.forEach(option => {
+          const btn = document.createElement("div");
+          btn.className = "option";
+          btn.textContent = option.name;
+          btn.addEventListener("click", () => {
+            if(option.name === currentCorrect.name) {
+              showFeedback("Giusto!", true);
+            } else {
+              showFeedback("Sbagliato!", false);
+            }
+          });
+          document.getElementById("options-container").appendChild(btn);
+        });
+      }
+    }
+
+    // Avvio il gioco quando la pagina è caricata
+    window.onload = generateQuestion;
+  </script>
 </body>
 </html>
