@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Indovina la Bandiera</title>
-  <!-- Includiamo la libreria Flag Icons -->
+  <!-- Inclusione della libreria Flag Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons/css/flag-icons.min.css">
   <style>
-    /* Stile base per il mobile e l’interfaccia */
+    /* Stili base per una visualizzazione ottimale anche su dispositivi mobili */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -64,6 +64,21 @@
       margin-top: 10px;
       height: 1.5em;
     }
+    /* Stili per evidenziare le risposte */
+    .correct {
+      border-color: green;
+      background-color: #c8facc;
+      color: black;
+    }
+    .wrong {
+      border-color: red;
+      background-color: #fcdcdc;
+      color: black;
+    }
+    .disabled {
+      pointer-events: none;
+      opacity: 0.6;
+    }
   </style>
 </head>
 <body>
@@ -76,7 +91,7 @@
   </div>
   
   <script>
-    // Array dei paesi con nome e codice (per Flag Icons, usa codici ISO in minuscolo)
+    // Array dei paesi con nome e codice (i codici sono quelli utilizzati dalla libreria Flag Icons)
     const countries = [
       {name: "Andorra", code: "ad"},
       {name: "Albania", code: "al"},
@@ -126,18 +141,18 @@
     ];
     
     let currentCorrect = null;
-    let currentMode = null; // modalità: "name-to-flag" oppure "flag-to-name"
+    let currentMode = null; // "name-to-flag" oppure "flag-to-name"
 
-    // Funzione per mescolare gli elementi di un array (algoritmo di Fisher-Yates)
+    // Funzione per mescolare un array (algoritmo di Fisher-Yates)
     function shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [array[i], array[j]] = [array[j], array[i]];
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
       }
       return array;
     }
 
-    // Genera un set di 4 opzioni (incluso il paese corretto)
+    // Genera 4 opzioni (inclusa quella corretta)
     function generateOptions(correctCountry) {
       const options = [correctCountry];
       while (options.length < 4) {
@@ -149,7 +164,7 @@
       return shuffleArray(options);
     }
 
-    // Mostra un messaggio di feedback e dopo breve intervallo genera una nuova domanda
+    // Mostra un messaggio di feedback e, dopo 1.5 secondi, genera una nuova domanda
     function showFeedback(message, isCorrect) {
       const feedbackDiv = document.getElementById("feedback");
       feedbackDiv.textContent = message;
@@ -160,33 +175,53 @@
       }, 1500);
     }
 
-    // Funzione che genera una nuova domanda, scegliendo casualmente una modalità e i relativi dati
+    // Impedisci l'interazione con le opzioni già scelte
+    function disableOptions() {
+      const optionElements = document.querySelectorAll(".option");
+      optionElements.forEach(option => {
+        option.classList.add("disabled");
+      });
+    }
+
+    // Evidenzia l'opzione corretta, aggiungendogli la classe "correct"
+    function highlightCorrectOption() {
+      const optionElements = document.querySelectorAll(".option");
+      optionElements.forEach(option => {
+        if (option.dataset.country === currentCorrect.name) {
+          option.classList.add("correct");
+        }
+      });
+    }
+
+    // Genera una nuova domanda
     function generateQuestion() {
-      // Reset degli elementi per una nuova domanda
       document.getElementById("options-container").innerHTML = "";
       document.getElementById("flag-display").innerHTML = "";
-
-      // Scegliamo la modalità casualmente
+      
+      // Scegliamo casualmente la modalità di gioco
       currentMode = Math.random() < 0.5 ? "name-to-flag" : "flag-to-name";
-
-      // Selezioniamo il paese corretto
       currentCorrect = countries[Math.floor(Math.random() * countries.length)];
       const options = generateOptions(currentCorrect);
-
+      
       const questionDiv = document.getElementById("question");
       
       if (currentMode === "name-to-flag") {
         // Modalità: dato il nome, seleziona la bandiera corretta
         questionDiv.textContent = "Seleziona la bandiera di: " + currentCorrect.name;
-        // Creiamo le opzioni come icone di bandiera
         options.forEach(option => {
           const btn = document.createElement("div");
           btn.className = "option";
+          btn.dataset.country = option.name;
           btn.innerHTML = '<span class="fi fi-' + option.code + ' flag-icon"></span>';
-          btn.addEventListener("click", () => {
-            if(option.name === currentCorrect.name) {
+          btn.addEventListener("click", function() {
+            disableOptions();
+            if (option.name === currentCorrect.name) {
+              btn.classList.add("correct");
               showFeedback("Giusto!", true);
             } else {
+              btn.classList.add("wrong");
+              // Evidenzia l'opzione corretta
+              highlightCorrectOption();
               showFeedback("Sbagliato!", false);
             }
           });
@@ -195,18 +230,21 @@
       } else {
         // Modalità: data la bandiera, seleziona il nome corretto
         questionDiv.textContent = "Seleziona il nome corrispondente a questa bandiera:";
-        // Visualizziamo la bandiera (corretta) in alto
         document.getElementById("flag-display").innerHTML = 
           '<span class="fi fi-' + currentCorrect.code + ' flag-icon"></span>';
-        // Creiamo le opzioni come testi con i nomi dei paesi
         options.forEach(option => {
           const btn = document.createElement("div");
           btn.className = "option";
+          btn.dataset.country = option.name;
           btn.textContent = option.name;
-          btn.addEventListener("click", () => {
-            if(option.name === currentCorrect.name) {
+          btn.addEventListener("click", function() {
+            disableOptions();
+            if (option.name === currentCorrect.name) {
+              btn.classList.add("correct");
               showFeedback("Giusto!", true);
             } else {
+              btn.classList.add("wrong");
+              highlightCorrectOption();
               showFeedback("Sbagliato!", false);
             }
           });
@@ -215,7 +253,7 @@
       }
     }
 
-    // Avvio il gioco quando la pagina è caricata
+    // Inizializza il gioco al caricamento della pagina
     window.onload = generateQuestion;
   </script>
 </body>
