@@ -7,7 +7,7 @@
   <!-- Inclusione della libreria Flag Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons/css/flag-icons.min.css">
   <style>
-    /* Stili base per una visualizzazione ottimale anche su dispositivi mobili */
+    /* Stili base per mobile e desktop */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -64,7 +64,7 @@
       margin-top: 10px;
       height: 1.5em;
     }
-    /* Stili per evidenziare le risposte */
+    /* Stili per le risposte corrette/errate */
     .correct {
       border-color: green;
       background-color: #c8facc;
@@ -79,19 +79,51 @@
       pointer-events: none;
       opacity: 0.6;
     }
+    /* Stili per la streak */
+    #streak {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    /* Stili per la cronologia errori */
+    #error-history {
+      margin-top: 20px;
+    }
+    #error-history summary {
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #error-log {
+      padding: 10px;
+    }
+    .error-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 5px;
+    }
+    .error-item .flag-icon {
+      font-size: 1.5em;
+    }
   </style>
 </head>
 <body>
   <div id="game">
     <h1>Indovina la Bandiera</h1>
+    <div id="streak">Streak: <span id="streak-value">0</span></div>
     <div id="question"></div>
     <div id="flag-display"></div>
     <div class="options" id="options-container"></div>
     <div id="feedback"></div>
+    
+    <details id="error-history">
+      <summary>Cronologia Errori</summary>
+      <div id="error-log"></div>
+    </details>
   </div>
   
   <script>
-    // Array dei paesi con nome e codice (i codici sono quelli utilizzati dalla libreria Flag Icons)
+    // Array dei paesi con nome e codice (usato dalla libreria Flag Icons)
     const countries = [
       {name: "Andorra", code: "ad"},
       {name: "Albania", code: "al"},
@@ -142,17 +174,19 @@
     
     let currentCorrect = null;
     let currentMode = null; // "name-to-flag" oppure "flag-to-name"
+    let streak = 0;         // Conta le risposte corrette di fila
+    let errorHistory = [];  // Lista degli errori (max 5)
 
-    // Funzione per mescolare un array (algoritmo di Fisher-Yates)
+    // Funzione per mescolare un array (algoritmo Fisher-Yates)
     function shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
       }
       return array;
     }
 
-    // Genera 4 opzioni (inclusa quella corretta)
+    // Genera 4 opzioni, includendo quella corretta
     function generateOptions(correctCountry) {
       const options = [correctCountry];
       while (options.length < 4) {
@@ -164,7 +198,25 @@
       return shuffleArray(options);
     }
 
-    // Mostra un messaggio di feedback e, dopo 1.5 secondi, genera una nuova domanda
+    // Aggiorna la visualizzazione della streak
+    function updateStreak() {
+      document.getElementById("streak-value").textContent = streak;
+    }
+
+    // Aggiorna la cronologia errori nella sezione collassabile
+    function updateErrorLog() {
+      const errorLogDiv = document.getElementById("error-log");
+      errorLogDiv.innerHTML = "";
+      // Mostra gli errori più recenti per primi
+      errorHistory.slice().reverse().forEach(error => {
+        const div = document.createElement("div");
+        div.className = "error-item";
+        div.innerHTML = '<span class="fi fi-' + error.code + ' flag-icon"></span><span>' + error.name + '</span>';
+        errorLogDiv.appendChild(div);
+      });
+    }
+
+    // Visualizza un messaggio di feedback e poi genera una nuova domanda
     function showFeedback(message, isCorrect) {
       const feedbackDiv = document.getElementById("feedback");
       feedbackDiv.textContent = message;
@@ -175,7 +227,7 @@
       }, 1500);
     }
 
-    // Impedisci l'interazione con le opzioni già scelte
+    // Disabilita ulteriori interazioni con le opzioni già selezionate
     function disableOptions() {
       const optionElements = document.querySelectorAll(".option");
       optionElements.forEach(option => {
@@ -183,7 +235,7 @@
       });
     }
 
-    // Evidenzia l'opzione corretta, aggiungendogli la classe "correct"
+    // Evidenzia l'opzione corretta aggiungendo la classe "correct"
     function highlightCorrectOption() {
       const optionElements = document.querySelectorAll(".option");
       optionElements.forEach(option => {
@@ -198,7 +250,7 @@
       document.getElementById("options-container").innerHTML = "";
       document.getElementById("flag-display").innerHTML = "";
       
-      // Scegliamo casualmente la modalità di gioco
+      // Scegliamo casualmente la modalità
       currentMode = Math.random() < 0.5 ? "name-to-flag" : "flag-to-name";
       currentCorrect = countries[Math.floor(Math.random() * countries.length)];
       const options = generateOptions(currentCorrect);
@@ -206,7 +258,6 @@
       const questionDiv = document.getElementById("question");
       
       if (currentMode === "name-to-flag") {
-        // Modalità: dato il nome, seleziona la bandiera corretta
         questionDiv.textContent = "Seleziona la bandiera di: " + currentCorrect.name;
         options.forEach(option => {
           const btn = document.createElement("div");
@@ -215,23 +266,28 @@
           btn.innerHTML = '<span class="fi fi-' + option.code + ' flag-icon"></span>';
           btn.addEventListener("click", function() {
             disableOptions();
-            if (option.name === currentCorrect.name) {
+            if(option.name === currentCorrect.name) {
               btn.classList.add("correct");
+              streak++;
+              updateStreak();
               showFeedback("Giusto!", true);
             } else {
               btn.classList.add("wrong");
-              // Evidenzia l'opzione corretta
+              streak = 0;
+              updateStreak();
               highlightCorrectOption();
+              // Aggiungi l'errore alla cronologia
+              errorHistory.push(currentCorrect);
+              if (errorHistory.length > 5) errorHistory.shift();
+              updateErrorLog();
               showFeedback("Sbagliato!", false);
             }
           });
           document.getElementById("options-container").appendChild(btn);
         });
       } else {
-        // Modalità: data la bandiera, seleziona il nome corretto
         questionDiv.textContent = "Seleziona il nome corrispondente a questa bandiera:";
-        document.getElementById("flag-display").innerHTML = 
-          '<span class="fi fi-' + currentCorrect.code + ' flag-icon"></span>';
+        document.getElementById("flag-display").innerHTML = '<span class="fi fi-' + currentCorrect.code + ' flag-icon"></span>';
         options.forEach(option => {
           const btn = document.createElement("div");
           btn.className = "option";
@@ -239,12 +295,20 @@
           btn.textContent = option.name;
           btn.addEventListener("click", function() {
             disableOptions();
-            if (option.name === currentCorrect.name) {
+            if(option.name === currentCorrect.name) {
               btn.classList.add("correct");
+              streak++;
+              updateStreak();
               showFeedback("Giusto!", true);
             } else {
               btn.classList.add("wrong");
+              streak = 0;
+              updateStreak();
               highlightCorrectOption();
+              // Aggiungi l'errore alla cronologia
+              errorHistory.push(currentCorrect);
+              if (errorHistory.length > 5) errorHistory.shift();
+              updateErrorLog();
               showFeedback("Sbagliato!", false);
             }
           });
@@ -253,7 +317,7 @@
       }
     }
 
-    // Inizializza il gioco al caricamento della pagina
+    // Avvia il gioco al caricamento della pagina
     window.onload = generateQuestion;
   </script>
 </body>
