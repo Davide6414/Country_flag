@@ -25,7 +25,7 @@
     h1 {
       text-align: center;
     }
-    /* Impostazioni extra: checkbox per filtrare bandiere già "masterizzate" */
+    /* Impostazioni extra: checkbox per il filtro */
     #settings {
       text-align: center;
       margin-top: 10px;
@@ -134,15 +134,29 @@
       gap: 10px;
       margin-bottom: 5px;
     }
-    .error-item .flag-icon {
-      font-size: 1.5em;
+    /* Stili per la classifica delle streak */
+    #streak-ranking {
+      margin-top: 20px;
+    }
+    #streak-ranking summary {
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #streak-log {
+      padding: 10px;
+    }
+    .ranking-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 5px;
     }
   </style>
 </head>
 <body>
   <div id="game">
     <h1>Indovina la Bandiera</h1>
-    <!-- Sezione impostazioni: checkbox per abilitare il filtro -->
+    <!-- Impostazioni: checkbox per il filtro dei paesi "masterizzati" -->
     <div id="settings">
       <label>
         <input type="checkbox" id="filter-checkbox">
@@ -156,14 +170,21 @@
     <div class="options" id="options-container"></div>
     <div id="feedback"></div>
     
+    <!-- Sezione cronologia errori -->
     <details id="error-history">
       <summary>Cronologia Errori</summary>
       <div id="error-log"></div>
     </details>
+    
+    <!-- Nuova sezione collassabile per la classifica degli stati con streak ≥ 10 -->
+    <details id="streak-ranking">
+      <summary>Classifica Streak Indovinati</summary>
+      <div id="streak-log"></div>
+    </details>
   </div>
   
   <script>
-    // Array dei paesi con nome e codice per Flag Icons
+    // Array dei paesi: nome e codice per Flag Icons
     const countries = [
       {name: "Andorra", code: "ad"},
       {name: "Albania", code: "al"},
@@ -212,7 +233,7 @@
       {name: "Città del Vaticano", code: "va"}
     ];
     
-    // Oggetto per tracciare quante volte ciascuna bandiera è stata indovinata di fila
+    // Oggetto per tracciare quante volte ciascun paese è stato indovinato consecutivamente
     let countryStreaks = {};
     
     // Variabili per gestire il gioco
@@ -230,18 +251,16 @@
       return array;
     }
     
-    // Funzione che restituisce il pool dei paesi:
-    // Se il filtro è attivo (checkbox checkata), esclude quelli con streak > 10 (ossia ≥ 11 risposte corrette di fila)
+    // Restituisce il pool dei paesi: se il filtro è attivo, esclude quelli con streak ≥ 11
     function getCountryPool() {
       const filterEnabled = document.getElementById("filter-checkbox").checked;
       let pool;
-      if(filterEnabled) {
+      if (filterEnabled) {
         pool = countries.filter(country => (countryStreaks[country.name] || 0) < 11);
       } else {
         pool = countries.slice();
       }
-      // Se il pool risultasse vuoto, utilizziamo la lista completa per evitare errori
-      if(pool.length === 0) {
+      if (pool.length === 0) {
         pool = countries.slice();
       }
       return pool;
@@ -250,15 +269,14 @@
     // Genera 4 opzioni includendo quella corretta, usando il pool filtrato se necessario
     function generateOptions(correctCountry) {
       let pool = getCountryPool();
-      // Assicuriamoci che il paese corretto sia presente
-      if(!pool.some(c => c.name === correctCountry.name)) {
+      if (!pool.some(c => c.name === correctCountry.name)) {
         pool.push(correctCountry);
       }
       const options = [correctCountry];
       let attempts = 0;
-      while(options.length < 4 && attempts < 100) {
+      while (options.length < 4 && attempts < 100) {
         let candidate = pool[Math.floor(Math.random() * pool.length)];
-        if(!options.some(opt => opt.name === candidate.name)) {
+        if (!options.some(opt => opt.name === candidate.name)) {
           options.push(candidate);
         }
         attempts++;
@@ -266,24 +284,47 @@
       return shuffleArray(options);
     }
     
-    // Aggiorna il valore della streak nella UI
+    // Aggiorna la visualizzazione della streak globale
     function updateStreak() {
       document.getElementById("streak-value").textContent = streak;
     }
     
-    // Aggiorna la sezione della cronologia errori (mostra gli ultimi 5 errori)
+    // Aggiorna la sezione della cronologia errori (ultimi 5 errori)
     function updateErrorLog() {
       const errorLogDiv = document.getElementById("error-log");
       errorLogDiv.innerHTML = "";
       errorHistory.slice().reverse().forEach(error => {
         const div = document.createElement("div");
         div.className = "error-item";
-        div.innerHTML = '<span class="fi fi-' + error.code + ' flag-icon"></span><span>' + error.name + '</span>';
+        div.innerHTML = '<span class="fi fi-' + error.code + ' flag-icon"></span>' +
+                        '<span>' + error.name + '</span>';
         errorLogDiv.appendChild(div);
       });
     }
     
-    // Mostra il feedback per 1.5 secondi e poi genera una nuova domanda
+    // Aggiorna la classifica delle streak: elenca i paesi con streak ≥ 10
+    function updateStreakRanking() {
+      const streakLogDiv = document.getElementById("streak-log");
+      streakLogDiv.innerHTML = "";
+      Object.keys(countryStreaks).forEach(countryName => {
+        const currentStreak = countryStreaks[countryName];
+        if (currentStreak >= 10) {
+          const countryObj = countries.find(c => c.name === countryName);
+          if (countryObj) {
+            const div = document.createElement("div");
+            div.className = "ranking-item";
+            // Usa la classe "correct" per evidenziare in verde
+            div.classList.add("correct");
+            div.innerHTML = '<span class="fi fi-' + countryObj.code + ' flag-icon"></span>' +
+                            '<span>' + countryObj.name + '</span>' +
+                            '<span>Streak: ' + currentStreak + '</span>';
+            streakLogDiv.appendChild(div);
+          }
+        }
+      });
+    }
+    
+    // Mostra un feedback per 1.5 sec e poi genera una nuova domanda
     function showFeedback(message, isCorrect) {
       const feedbackDiv = document.getElementById("feedback");
       feedbackDiv.textContent = message;
@@ -294,48 +335,46 @@
       }, 1500);
     }
     
-    // Disabilita le opzioni (modalità a scelta multipla)
+    // Disabilita interazioni sulle opzioni (per modalità a scelta multipla)
     function disableOptions() {
-      const optionElements = document.querySelectorAll(".option");
-      optionElements.forEach(option => {
+      document.querySelectorAll(".option").forEach(option => {
         option.classList.add("disabled");
       });
     }
     
-    // Evidenzia, nelle modalità a scelta multipla, l'opzione corretta
+    // Evidenzia (nelle modalità a scelta multipla) l'opzione corretta
     function highlightCorrectOption() {
-      const optionElements = document.querySelectorAll(".option");
-      optionElements.forEach(option => {
-        if(option.dataset.country === currentCorrect.name) {
+      document.querySelectorAll(".option").forEach(option => {
+        if (option.dataset.country === currentCorrect.name) {
           option.classList.add("correct");
         }
       });
     }
     
-    // Genera una nuova domanda
+    // Genera una nuova domanda, scegliendo casualmente una delle tre modalità
     function generateQuestion() {
-      // Pulizia delle sezioni prima di iniziare una nuova domanda
+      // Pulizia delle sezioni
       document.getElementById("options-container").innerHTML = "";
       document.getElementById("flag-display").innerHTML = "";
       document.getElementById("input-container").innerHTML = "";
       
-      // Selezioniamo la modalità casualmente (circa 33% per ciascuna)
+      // Seleziona la modalità: circa 33% per ciascuna
       const modeRandom = Math.random();
-      if(modeRandom < 1/3) {
+      if (modeRandom < 1/3) {
         currentMode = "name-to-flag";
-      } else if(modeRandom < 2/3) {
+      } else if (modeRandom < 2/3) {
         currentMode = "flag-to-name";
       } else {
         currentMode = "flag-to-input";
       }
       
-      // Selezione dal pool (possibilmente filtrato se la checkbox è attiva)
+      // Selezione dal pool (eventualmente filtrato)
       const pool = getCountryPool();
       currentCorrect = pool[Math.floor(Math.random() * pool.length)];
       const options = generateOptions(currentCorrect);
       const questionDiv = document.getElementById("question");
       
-      if(currentMode === "name-to-flag") {
+      if (currentMode === "name-to-flag") {
         questionDiv.textContent = "Seleziona la bandiera di: " + currentCorrect.name;
         options.forEach(option => {
           const btn = document.createElement("div");
@@ -344,27 +383,31 @@
           btn.innerHTML = '<span class="fi fi-' + option.code + ' flag-icon"></span>';
           btn.addEventListener("click", function() {
             disableOptions();
-            if(option.name === currentCorrect.name) {
+            if (option.name === currentCorrect.name) {
               btn.classList.add("correct");
               streak++;
               updateStreak();
+              // Incrementa lo streak per il paese
               countryStreaks[currentCorrect.name] = (countryStreaks[currentCorrect.name] || 0) + 1;
+              updateStreakRanking();
               showFeedback("Giusto!", true);
             } else {
               btn.classList.add("wrong");
               streak = 0;
               updateStreak();
               highlightCorrectOption();
+              // Azzeriamo lo streak per il paese in caso di errore
               countryStreaks[currentCorrect.name] = 0;
+              updateStreakRanking();
               errorHistory.push(currentCorrect);
-              if(errorHistory.length > 5) errorHistory.shift();
+              if (errorHistory.length > 5) errorHistory.shift();
               updateErrorLog();
               showFeedback("Sbagliato!", false);
             }
           });
           document.getElementById("options-container").appendChild(btn);
         });
-      } else if(currentMode === "flag-to-name") {
+      } else if (currentMode === "flag-to-name") {
         questionDiv.textContent = "Seleziona il nome corrispondente a questa bandiera:";
         document.getElementById("flag-display").innerHTML = '<span class="fi fi-' + currentCorrect.code + ' flag-icon"></span>';
         options.forEach(option => {
@@ -374,11 +417,12 @@
           btn.textContent = option.name;
           btn.addEventListener("click", function() {
             disableOptions();
-            if(option.name === currentCorrect.name) {
+            if (option.name === currentCorrect.name) {
               btn.classList.add("correct");
               streak++;
               updateStreak();
               countryStreaks[currentCorrect.name] = (countryStreaks[currentCorrect.name] || 0) + 1;
+              updateStreakRanking();
               showFeedback("Giusto!", true);
             } else {
               btn.classList.add("wrong");
@@ -386,15 +430,16 @@
               updateStreak();
               highlightCorrectOption();
               countryStreaks[currentCorrect.name] = 0;
+              updateStreakRanking();
               errorHistory.push(currentCorrect);
-              if(errorHistory.length > 5) errorHistory.shift();
+              if (errorHistory.length > 5) errorHistory.shift();
               updateErrorLog();
               showFeedback("Sbagliato!", false);
             }
           });
           document.getElementById("options-container").appendChild(btn);
         });
-      } else if(currentMode === "flag-to-input") {
+      } else if (currentMode === "flag-to-input") {
         questionDiv.textContent = "Inserisci il nome dello stato corrispondente a questa bandiera:";
         document.getElementById("flag-display").innerHTML = '<span class="fi fi-' + currentCorrect.code + ' flag-icon"></span>';
         const inputContainer = document.getElementById("input-container");
@@ -411,27 +456,27 @@
           submitBtn.disabled = true;
           const userAnswer = input.value.trim().toLowerCase();
           const correctAnswer = currentCorrect.name.toLowerCase();
-          if(userAnswer === correctAnswer) {
+          if (userAnswer === correctAnswer) {
             input.style.borderColor = "green";
             streak++;
             updateStreak();
             countryStreaks[currentCorrect.name] = (countryStreaks[currentCorrect.name] || 0) + 1;
+            updateStreakRanking();
             showFeedback("Giusto!", true);
           } else {
             input.style.borderColor = "red";
             streak = 0;
             updateStreak();
             countryStreaks[currentCorrect.name] = 0;
+            updateStreakRanking();
             errorHistory.push(currentCorrect);
-            if(errorHistory.length > 5) errorHistory.shift();
+            if (errorHistory.length > 5) errorHistory.shift();
             updateErrorLog();
             showFeedback("Sbagliato! La risposta corretta era " + currentCorrect.name, false);
           }
         }
         input.addEventListener("keydown", function(event) {
-          if(event.key === "Enter") {
-            checkInputAnswer();
-          }
+          if (event.key === "Enter") checkInputAnswer();
         });
         submitBtn.addEventListener("click", checkInputAnswer);
         inputContainer.appendChild(input);
@@ -440,7 +485,7 @@
       }
     }
     
-    // Genera il datalist per il campo di testo nella modalità "flag-to-input"
+    // Genera il <datalist> per il campo di testo nella modalità "flag-to-input"
     function generateDatalist() {
       const datalist = document.createElement("datalist");
       datalist.id = "countries-list";
